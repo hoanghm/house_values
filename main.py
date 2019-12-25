@@ -21,6 +21,7 @@ class DataFrameSelector(BaseEstimator, TransformerMixin):
             return X[self.num_attribs]
         else:
             return X.drop(self.num_attribs, axis=1)
+       
         
 '''
  Label Binarizer
@@ -28,16 +29,18 @@ class DataFrameSelector(BaseEstimator, TransformerMixin):
 from sklearn.preprocessing import LabelBinarizer
 class MyLabelBinarizer(BaseEstimator, TransformerMixin):
     def __init__(self):
-        self.matrix = {}
+        pass
     def fit(self, X, y=None):
-        self.encoders = [LabelBinarizer(sparse_output=False)] * X.shape[1]
+        self.columns = [0] * X.shape[1]
+        self.encoders = [0] * X.shape[1]
         for i in range(X.shape[1]):
-            self.matrix[str(i)] = self.encoders[i].fit(X.iloc[:,i])
-        return pd.DataFrame(self.matrix)
+            self.encoders[i]= LabelBinarizer(sparse_output=False).fit(X.iloc[:,i])
+        return self
     def transform(self, X):
         for i in range(X.shape[1]):
-            self.matrix[str(i)] = self.encoders[i].transform(X.iloc[:,i])
-        return pd.DataFrame(self.matrix)
+            self.columns[i] = self.encoders[i].transform(X.iloc[:,i])
+        result = tuple(self.columns)
+        return np.c_[result]
     
 '''
 My Categorical Imputer
@@ -75,6 +78,8 @@ from sklearn.model_selection import train_test_split
 train_set, test_set = train_test_split(data, test_size=0.2, random_state=42)
 X = train_set.drop('SalePrice', axis=1)
 y = train_set['SalePrice'].copy()
+test_X = test_set.drop('SalePrice', axis=1)
+test_y = test_set['SalePrice'].copy()
 
 '''
  Create a Pipeline
@@ -99,6 +104,17 @@ full_pipeline = FeatureUnion(transformer_list=[
         ('cat_pipeline', cat_pipeline)
         ])
 
-nums = cat_pipeline.fit_transform(X)
+houses_prepared = full_pipeline.fit_transform(X)
+
+from sklearn.ensemble import RandomForestRegressor
+predictor = RandomForestRegressor()
+predictor.fit(houses_prepared, y)
+
+test_X_prepared = full_pipeline.transform(test_X)
+
+predictions = predictor.predict(test_X_prepared)
+
+from sklearn.metrics import  
+        
 
 
