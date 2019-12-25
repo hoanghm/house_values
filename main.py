@@ -64,14 +64,20 @@ class MyLabelEncoder(BaseEstimator, TransformerMixin):
         return self.encoder.fit(X)
     def transform(self, X):
         return self.encoder.transform(X).reshape(-1,1)
+    
+'''
+ Variable Selector 
+'''
+def variableSelector(X):
+    return X.drop(['3SsnPorch', 'BsmtFinSF2', 'BsmtHalfBath', 'MoSold', 'Id', 'LowQualFinSF', 
+                          'YrSold', 'MiscVal', 'Alley'],
+                         axis = 1)
+    
         
 
 data = pd.read_csv('train.csv')
 
-# Eliminate variables with low correlation
-data = data.drop(['3SsnPorch', 'BsmtFinSF2', 'BsmtHalfBath', 'MoSold', 'Id', 'LowQualFinSF', 
-                  'YrSold', 'MiscVal', 'Alley'],
-                 axis = 1)
+data = variableSelector(data)
 
 # Split the data into train set and test set 
 from sklearn.model_selection import train_test_split
@@ -103,18 +109,32 @@ full_pipeline = FeatureUnion(transformer_list=[
         ('num_pipeline', num_pipeline),
         ('cat_pipeline', cat_pipeline)
         ])
+    
 
 houses_prepared = full_pipeline.fit_transform(X)
 
+'''
+ Fit the model
+'''
 from sklearn.ensemble import RandomForestRegressor
 predictor = RandomForestRegressor()
 predictor.fit(houses_prepared, y)
 
-test_X_prepared = full_pipeline.transform(test_X)
+'''
+ Use the model on the actual test set
+'''
+initial_test_data = pd.read_csv('test.csv')
+test_data = variableSelector(initial_test_data)
+
+
+test_X_prepared = full_pipeline.transform(test_data)
 
 predictions = predictor.predict(test_X_prepared)
 
-from sklearn.metrics import  
+results = np.c_[initial_test_data['Id'], predictions]
+
+np.savetxt(fname='result.csv', X=results, delimiter=',')
+
         
 
 
