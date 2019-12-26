@@ -113,27 +113,67 @@ full_pipeline = FeatureUnion(transformer_list=[
 
 houses_prepared = full_pipeline.fit_transform(X)
 
+
+'''
+ Test the model on the test set 
+'''
+def print_scores(scores):
+    print('Scores: ', scores)
+    print('Mean: ', scores.mean())
+    print('SD: ', scores.std())
+
+def remove_from_list(a, elements):
+    for e in elements:
+        a.remove(e)
+    return a 
+
+from sklearn.model_selection import cross_val_score
+from sklearn.ensemble import RandomForestRegressor
+predictor = RandomForestRegressor()
+
+scores = cross_val_score(predictor, houses_prepared, y, scoring='neg_mean_squared_error', cv=10)
+rmse = np.sqrt(-scores)
+print_scores(rmse)
+
+
 '''
  Fit the model
 '''
-from sklearn.ensemble import RandomForestRegressor
 predictor = RandomForestRegressor()
 predictor.fit(houses_prepared, y)
 
-'''
- Use the model on the actual test set
-'''
-initial_test_data = pd.read_csv('test.csv')
-test_data = variableSelector(initial_test_data)
 
 
-test_X_prepared = full_pipeline.transform(test_data)
 
-predictions = predictor.predict(test_X_prepared)
+# =============================================================================
+# '''
+# Test the model on the test set 
+# '''
+# test_X_prepared = full_pipeline.transform(test_X)
+# y_predict = predictor.predict(test_X_prepared)
+# 
+# from sklearn.metrics import mean_squared_error
+# rmse = np.sqrt(mean_squared_error(test_y, y_predict))
+# =============================================================================
 
-results = np.c_[initial_test_data['Id'], predictions]
 
-np.savetxt(fname='result.csv', X=results, delimiter=',')
+
+# =============================================================================
+# '''
+#  Use the model on the actual test set
+# '''
+# initial_test_data = pd.read_csv('test.csv')
+# test_data = variableSelector(initial_test_data)
+# 
+# 
+# test_X_prepared = full_pipeline.transform(test_data)
+# 
+# predictions = predictor.predict(test_X_prepared)
+# 
+# results = np.c_[initial_test_data['Id'], predictions]
+# 
+# np.savetxt(fname='result.csv', X=results, delimiter=',')
+# =============================================================================
 
         
 
